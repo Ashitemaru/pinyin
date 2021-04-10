@@ -65,7 +65,7 @@ def data_filter():
 
             # Write it into files
             for part in sentence_list:
-                final_handler.write('#' + part + '\n')
+                final_handler.write('^' + part + '$\n')
 
 if __name__ == '__main__':
     data_filter()
