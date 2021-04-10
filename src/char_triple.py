@@ -6,11 +6,11 @@ from tqdm import tqdm
 import json
 import math
 
-input_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/input.txt'
-output_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/output.txt'
+input_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/sandbox/input.txt'
+output_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/sandbox/output.txt'
 
 mapping_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/dictionary/pinyin_hanzi.txt'
-double_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/double.json'
+double_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/triple.json'
 
 def get_mapping():
     mapping = {}
@@ -43,11 +43,11 @@ def main():
     # Get the hanzi str from pinyin
     for pinyin_str in input_handler.readlines():
 
-        # Start the pinyin str with a ^, end the pinyin str with a $
-        pinyin_list = ['^']
+        # Start the pinyin str with a ^^, end the pinyin str with a $$
+        pinyin_list = ['^', '^']
         pinyin_list += pinyin_str.split(' ')
         pinyin_list[-1] = pinyin_list[-1].replace('\n', '')
-        pinyin_list.append('$')
+        pinyin_list += ['$', '$']
         
         # Start the DP with empty list
         dp_list = [[] for _ in range(len(pinyin_list))]

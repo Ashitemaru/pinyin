@@ -1,3 +1,8 @@
+'''
+    The module used to filter legal characters.
+    Usage: python3 preprocess.py <size_of_char_tuples>
+'''
+
 import sys
 
 sys.path.append('/usr/local/lib/python3.8/site-packages/')
@@ -12,7 +17,7 @@ corpus_path_prefix = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/p
 corpus_index_list = ['02', '04', '05', '06', '07', '08', '09', '10', '11']
 corpus_path_suffix = '.txt'
 
-final_path_prefix = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/corpus/news-'
+final_path_prefix = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/triple_corpus/news-'
 
 punctuation_regex = r'[，。、！？《》“”（）\(\)@#¥%&*～；【】「」｜：\.,a-zA-Z0-9\{\}\[\]\\<>~`\$\^-_—+=|;:\'\"!?]'
 
@@ -45,6 +50,17 @@ def filter_legal_hanzi(raw_str, table):
     return splited_str
 
 def data_filter():
+    if len(sys.argv) != 2:
+        print('Error!')
+        return
+
+    char_num = 0
+    try:
+        char_num = int(sys.argv[1])
+    except ValueError:
+        print('Illegal num!')
+    char_num -= 1
+
     # Get all the legal hanzi
     hanzi_set = get_hanzi_table()
 
@@ -65,7 +81,7 @@ def data_filter():
 
             # Write it into files
             for part in sentence_list:
-                final_handler.write('^' + part + '$\n')
+                final_handler.write('^' * char_num + part + '$' * char_num + '\n')
 
 if __name__ == '__main__':
     data_filter()
