@@ -3,41 +3,97 @@ import sys
 sys.path.append('/usr/local/lib/python3.8/site-packages/')
 
 from tqdm import tqdm
+import json
+import math
 
-corpus_path_prefix = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/corpus/news-'
-corpus_index_list = ['02', '04', '05', '06', '07', '08', '09', '10', '11']
-corpus_path_suffix = '.txt'
+input_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/input.txt'
+output_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/output.txt'
 
-final_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/double.json'
+mapping_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/dictionary/pinyin_hanzi.txt'
+double_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/double.json'
+
+def get_mapping():
+    mapping = {}
+    mapping_handler = open(mapping_file_path, 'r')
+    raw_mapping_str_list = mapping_handler.readlines()
+
+    # Add the mapping relations
+    for raw_str in raw_mapping_str_list:
+        raw_list = raw_str.split(' ')
+        raw_list[-1] = raw_list[-1].replace('\n', '')
+        mapping[raw_list[0]] = raw_list[1: ]
+    
+    return mapping
+
+def get_weight_dict():
+    json_handle = open(double_json_path, 'r')
+    return json.loads(json_handle.readlines()[0].replace('\'', '\"'))
 
 def main():
-    # The double dictionary
-    static = {}
+    input_handler = open(input_file_path, 'r')
+    output_handler = open(output_file_path, 'w')
 
-    # Sum all things up
-    for i in corpus_index_list:
-        corpus_handler = open(corpus_path_prefix + i + corpus_path_suffix, 'r')
-        sentence_list = corpus_handler.readlines()
+    # Load the map from pinyin to hanzi
+    mapping = get_mapping()
 
-        # Get the statistics of every sentence
-        for sentence in tqdm(sentence_list):
-            for ind in range(len(sentence) - 1):
-                # If the starting hanzi is not in the dict, create it
-                if not sentence[ind] in static:
-                    static[sentence[ind]] = {
-                        'total': 0,
-                    }
-                
-                # If the double is not in the dict, create it
-                if not sentence[ind: ind + 2] in static[sentence[ind]]:
-                    static[sentence[ind]][sentence[ind: ind + 2]] = 0
-                
-                # Add the number up
-                static[sentence[ind]][sentence[ind: ind + 2]] += 1
-                static[sentence[ind]]['total'] += 1
+    # Load the dict of weights
+    weight_dict = get_weight_dict()
+
+    # Get the hanzi str from pinyin
+    for pinyin_str in tqdm(input_handler.readlines()):
+
+        # Start the pinyin str with a ^, end the pinyin str with a $
+        pinyin_list = ['^']
+        pinyin_list += pinyin_str.split(' ')
+        pinyin_list.append('$')
         
-    final_json_handler = open(final_path, 'w')
-    final_json_handler.write(str(static))
+        # Start the DP with empty list
+        dp_list = [[0]]
+        dp_list += [[] for _ in range(len(pinyin_list + 1))]
+
+        # Set up the path list
+        path_list = [[-1]]
+        path_list += [[] for _ in range(len(pinyin_list + 1))]
+
+        for ind_in_str, pinyin in enumerate(pinyin_list):
+
+            # Skip the starting char
+            if ind_in_str == 0:
+                continue
+
+            # Get the available hanzi
+            try:
+                now_hanzi_list = mapping[pinyin] if pinyin != '$' else ['$']
+                prev_hanzi_list = mapping[pinyin_list[ind_in_str - 1]]
+            except KeyError:
+                print('No legal hanzi exists!')
+
+            # Init the dp_list of this layer
+            dp_list[ind_in_str] = [math.inf for _ in range(len(now_hanzi_list))]
+            path_list[ind_in_str] = [-1 for _ in range(len(now_hanzi_list))]
+
+            # The double loop is for traversing the pairs of (prev_char, now_char)
+            # This is the process of DP
+            for ind_in_now_candidates, now_char in enumerate(now_hanzi_list):
+                for ind_in_prev_candidates, prev_char in enumerate(prev_hanzi_list):
+
+                    # Get the weights dict of doubles started by the prev_char
+                    weights = weight_dict[prev_char]
+
+                    # Get the counts and the len of the path
+                    double_count = weights.get(prev_char + now_char, 0)
+                    tot_count = weights['total']
+                    path_len = -math.log(double_count / tot_count) if double_count != 0 else math.inf
+                    path_len += dp_list[ind_in_str - 1][ind_in_prev_candidates]
+
+                    # Update the dp_list
+                    if path_len <= dp_list[ind_in_str][ind_in_now_candidates]:
+                        dp_list[ind_in_str][ind_in_now_candidates] = path_len
+                        path_list[ind_in_str][ind_in_now_candidates] = ind_in_prev_candidates
+
+            # Use the data of DP to get the hanzi str
+            final_path_list = []
+            
 
 if __name__ == '__main__':
     main()
