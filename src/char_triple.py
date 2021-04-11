@@ -13,7 +13,8 @@ mapping_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pi
 double_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/double.json'
 triple_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/triple.json'
 
-lr = 1 - 1e-4
+smooth_param = 1 - 1e-4
+dt_param = 0.8
 
 def get_mapping():
     mapping = {}
@@ -104,13 +105,17 @@ def main():
                         # Get the counts and the len of the path
                         triple_tuple_count = triple_weights.get(pprev_hanzi + prev_hanzi + now_hanzi, 0)
                         triple_tot_count = triple_weights['total']
-                        triple_path_len = -math.log(triple_tuple_count / triple_tot_count * lr + triple_tot_count / triple_tot * (1 - lr))
+                        triple_path_len = -math.log(
+                            triple_tuple_count / triple_tot_count * smooth_param + triple_tot_count / triple_tot * (1 - smooth_param)
+                        )
 
                         double_tuple_count = double_weights.get(prev_hanzi + now_hanzi, 0)
                         double_tot_count = double_weights['total']
-                        double_path_len = -math.log(double_tuple_count / double_tot_count * lr + double_tot_count / double_tot * (1 - lr))
+                        double_path_len = -math.log(
+                            double_tuple_count / double_tot_count * smooth_param + double_tot_count / double_tot * (1 - smooth_param)
+                        )
 
-                        path_len = triple_path_len + double_path_len
+                        path_len = dt_param * triple_path_len + (1 - dt_param) * double_path_len
                         path_len += dp_state[ind_in_pprev][ind_in_prev][1]
 
                         # Update the new layer of DP
