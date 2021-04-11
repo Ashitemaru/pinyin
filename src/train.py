@@ -1,6 +1,6 @@
 '''
     The module used to train the model. This model is based on characters.
-    Usage: python3 train_char.py <size_of_char_tuples>
+    Usage: python3 train.py <size_of_char_tuples>
 '''
 
 import sys

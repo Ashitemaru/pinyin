@@ -46,6 +46,8 @@ def get_triple_weight_dict():
     return json_pack, tot
 
 def main():
+    dt_param = float(sys.argv[1])
+
     input_handler = open(input_file_path, 'r')
     output_handler = open(output_file_path, 'w')
 
@@ -97,23 +99,30 @@ def main():
                     for ind_in_prev, prev_hanzi in enumerate(prev_legal_hanzi):
 
                         # Get the weights dict of doubles started by the prev_hanzi
-                        double_weights = double_weight_dict.get(prev_hanzi, None)
-                        triple_weights = triple_weight_dict.get(pprev_hanzi + prev_hanzi, None)
-                        if double_weights == None or triple_weights == None:
-                            continue
+                        double_weights = double_weight_dict.get(prev_hanzi, {'total': 0})
+                        triple_weights = triple_weight_dict.get(pprev_hanzi + prev_hanzi, {'total': 0})
+
+                        def get_path_len(tuple_count, prefix_count, corpus_count, corpus):
+                            suffix_count = corpus.get(now_hanzi, {'total': 0})['total']
+                            if tuple_count:
+                                return -math.log(
+                                    tuple_count / prefix_count * smooth_param + suffix_count / corpus_count * (1 - smooth_param)
+                                )
+                            elif suffix_count:
+                                return -math.log(
+                                    suffix_count / corpus_count * (1 - smooth_param)
+                                )
+                            else:
+                                return math.inf
 
                         # Get the counts and the len of the path
                         triple_tuple_count = triple_weights.get(pprev_hanzi + prev_hanzi + now_hanzi, 0)
                         triple_tot_count = triple_weights['total']
-                        triple_path_len = -math.log(
-                            triple_tuple_count / triple_tot_count * smooth_param + triple_tot_count / triple_tot * (1 - smooth_param)
-                        )
+                        triple_path_len = get_path_len(triple_tuple_count, triple_tot_count, double_tot, double_weight_dict)
 
                         double_tuple_count = double_weights.get(prev_hanzi + now_hanzi, 0)
                         double_tot_count = double_weights['total']
-                        double_path_len = -math.log(
-                            double_tuple_count / double_tot_count * smooth_param + double_tot_count / double_tot * (1 - smooth_param)
-                        )
+                        double_path_len = get_path_len(double_tuple_count, double_tot_count, double_tot, double_weight_dict)
 
                         path_len = dt_param * triple_path_len + (1 - dt_param) * double_path_len
                         path_len += dp_state[ind_in_pprev][ind_in_prev][1]
