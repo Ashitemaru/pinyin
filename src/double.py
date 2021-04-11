@@ -6,11 +6,10 @@ from tqdm import tqdm
 import json
 import math
 
-input_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/input.txt'
-output_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/output.txt'
-
-mapping_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/dictionary/pinyin_hanzi.txt'
-double_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/double.json'
+input_file_path = ''
+output_file_path = ''
+mapping_file_path = ''
+double_json_path = ''
 
 def get_mapping():
     mapping = {}
@@ -30,6 +29,13 @@ def get_weight_dict():
     return json.loads(json_handle.readlines()[0].replace('\'', '\"'))
 
 def main():
+    if len(sys.argv) != 5:
+        print('Error!')
+        return
+
+    global input_file_path, output_file_path, mapping_file_path, double_json_path
+    input_file_path, output_file_path, mapping_file_path, double_json_path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+
     input_handler = open(input_file_path, 'r')
     output_handler = open(output_file_path, 'w')
 

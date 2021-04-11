@@ -6,12 +6,11 @@ from tqdm import tqdm
 import json
 import math
 
-input_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/input.txt'
-output_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/output.txt'
-
-mapping_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/dictionary/pinyin_hanzi.txt'
-double_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/double.json'
-triple_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/triple.json'
+input_file_path = ''
+output_file_path = ''
+mapping_file_path = ''
+double_json_path = ''
+triple_json_path = ''
 
 smooth_param = 1 - 1e-4
 dt_param = 0.8
@@ -46,7 +45,12 @@ def get_triple_weight_dict():
     return json_pack, tot
 
 def main():
-    dt_param = float(sys.argv[1])
+    if len(sys.argv) != 6:
+        print('Error!')
+        return
+
+    global input_file_path, output_file_path, mapping_file_path, double_json_path, triple_json_path
+    input_file_path, output_file_path, mapping_file_path, double_json_path, triple_json_path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
 
     input_handler = open(input_file_path, 'r')
     output_handler = open(output_file_path, 'w')
@@ -105,15 +109,11 @@ def main():
                         def get_path_len(tuple_count, prefix_count, corpus_count, corpus):
                             suffix_count = corpus.get(now_hanzi, {'total': 0})['total']
                             if tuple_count:
-                                return -math.log(
-                                    tuple_count / prefix_count * smooth_param + suffix_count / corpus_count * (1 - smooth_param)
-                                )
+                                return tuple_count / prefix_count * smooth_param + suffix_count / corpus_count * (1 - smooth_param)
                             elif suffix_count:
-                                return -math.log(
-                                    suffix_count / corpus_count * (1 - smooth_param)
-                                )
+                                return suffix_count / corpus_count * (1 - smooth_param)
                             else:
-                                return math.inf
+                                return 0
 
                         # Get the counts and the len of the path
                         triple_tuple_count = triple_weights.get(pprev_hanzi + prev_hanzi + now_hanzi, 0)
@@ -124,7 +124,9 @@ def main():
                         double_tot_count = double_weights['total']
                         double_path_len = get_path_len(double_tuple_count, double_tot_count, double_tot, double_weight_dict)
 
-                        path_len = dt_param * triple_path_len + (1 - dt_param) * double_path_len
+                        path_len = -math.log(
+                            dt_param * triple_path_len + (1 - dt_param) * double_path_len
+                        ) if triple_path_len != 0 and double_path_len != 0 else math.inf
                         path_len += dp_state[ind_in_pprev][ind_in_prev][1]
 
                         # Update the new layer of DP
