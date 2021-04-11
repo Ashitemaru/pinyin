@@ -1,6 +1,6 @@
 '''
     The module used to filter legal characters.
-    Usage: python3 preprocess.py <size_of_char_tuples>
+    Usage: python3 preprocess.py <size_of_tuples>
 '''
 
 import sys

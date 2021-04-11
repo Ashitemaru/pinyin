@@ -6,8 +6,8 @@ from tqdm import tqdm
 import json
 import math
 
-input_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/sandbox/input.txt'
-output_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/sandbox/output.txt'
+input_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/input.txt'
+output_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/data/test/output.txt'
 
 mapping_file_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/dictionary/pinyin_hanzi.txt'
 double_json_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/triple.json'
@@ -36,6 +36,7 @@ def main():
     # Load the map from pinyin to hanzi
     mapping = get_mapping()
     mapping['^'] = ['^']
+    mapping['$'] = ['$']
 
     # Load the dict of weights
     weight_dict = get_weight_dict()
@@ -43,69 +44,56 @@ def main():
     # Get the hanzi str from pinyin
     for pinyin_str in input_handler.readlines():
 
-        # Start the pinyin str with a ^^, end the pinyin str with a $$
+        # Start the pinyin str with a ^, end the pinyin str with a $
         pinyin_list = ['^', '^']
         pinyin_list += pinyin_str.split(' ')
         pinyin_list[-1] = pinyin_list[-1].replace('\n', '')
         pinyin_list += ['$', '$']
         
         # Start the DP with empty list
-        dp_list = [[] for _ in range(len(pinyin_list))]
-        dp_list[0] = [0]
+        # The tuple: (path_len, prefix)
+        dp_list = [[[0, '^']], [[0, '^']]]
 
-        # Set up the path list
-        path_list = [[] for _ in range(len(pinyin_list))]
-        path_list[0] = [-1]
+        flag = 2
+        while flag < len(pinyin_list):
 
-        # Translate every pinyin from the pinyin str
-        for ind_in_str, pinyin in enumerate(pinyin_list):
+            # Get the legal hanzi & forward the pointer
+            pprev_legal_hanzi = mapping[pinyin_list[flag - 2]]
+            prev_legal_hanzi = mapping[pinyin_list[flag - 1]]
+            now_legal_hanzi = mapping[pinyin_list[flag]]
+            flag += 1
 
-            # Skip the starting char
-            if ind_in_str == 0:
-                continue
+            # If there are no legal hanzi, break
+            if not len(now_legal_hanzi):
+                break
 
-            # Get the available hanzi
-            now_hanzi_list = mapping[pinyin] if pinyin != '$' else ['$']
-            prev_hanzi_list = mapping[pinyin_list[ind_in_str - 1]]
+            # Set up the new layer of DP
+            new_layer_in_dp = [[math.inf, ''] for _ in range(len(now_legal_hanzi))]
 
-            # Init the dp_list of this layer
-            dp_list[ind_in_str] = [math.inf for _ in range(len(now_hanzi_list))]
-            path_list[ind_in_str] = [-1 for _ in range(len(now_hanzi_list))]
+            for ind_in_now, now_hanzi in enumerate(now_legal_hanzi):
+                for ind_in_pprev, pprev_hanzi in enumerate(pprev_legal_hanzi):
+                    for ind_in_prev, prev_hanzi in enumerate(prev_legal_hanzi):
 
-            # The double loop is for traversing the pairs of (prev_char, now_char)
-            # This is the process of DP
-            for ind_in_now_candidates, now_char in enumerate(now_hanzi_list):
-                for ind_in_prev_candidates, prev_char in enumerate(prev_hanzi_list):
+                        # Get the weights dict of doubles started by the prev_hanzi
+                        weights = weight_dict.get(pprev_hanzi + prev_hanzi, None)
+                        if weights == None:
+                            continue
 
-                    # Get the weights dict of doubles started by the prev_char
-                    weights = weight_dict.get(prev_char, None)
-                    if weights == None:
-                        continue
+                        # Get the counts and the len of the path
+                        tuple_count = weights.get(pprev_hanzi + prev_hanzi + now_hanzi, 0)
+                        tot_count = weights['total']
+                        path_len = -math.log(tuple_count / tot_count) if tuple_count != 0 else math.inf
+                        path_len += dp_list[-1][ind_in_prev][0]
 
-                    # Get the counts and the len of the path
-                    double_count = weights.get(prev_char + now_char, 0)
-                    tot_count = weights['total']
-                    path_len = -math.log(double_count / tot_count) if double_count != 0 else math.inf
-                    path_len += dp_list[ind_in_str - 1][ind_in_prev_candidates]
-
-                    # Update the dp_list
-                    if path_len <= dp_list[ind_in_str][ind_in_now_candidates]:
-                        dp_list[ind_in_str][ind_in_now_candidates] = path_len
-                        path_list[ind_in_str][ind_in_now_candidates] = ind_in_prev_candidates
-
-        # Use the data of DP to get the path list
-        final_path_list = []
-        now_loc = 0
-        for i in range(len(pinyin_list)):
-            final_path_list.append(path_list[-i - 1][now_loc])
-            now_loc = path_list[-i - 1][now_loc]
-        final_path_list = final_path_list[: : -1][2: ]
-
-        # Transfer
-        hanzi_str = ''
-        for i, ind in enumerate(final_path_list):
-            hanzi_str += mapping[pinyin_list[i + 1]][ind]
-        output_handler.write(hanzi_str + '\n')
+                        # Update the new layer of DP
+                        if path_len <= new_layer_in_dp[ind_in_now][0]:
+                            new_layer_in_dp[ind_in_now][0] = path_len
+                            new_layer_in_dp[ind_in_now][1] = dp_list[-1][ind_in_prev][1] + now_hanzi
+            
+            # Push the new layer to DP list
+            dp_list.append(new_layer_in_dp)
+        
+        output_handler.write(dp_list[-1][0][1].replace('^', '').replace('$', '') + '\n')
 
 if __name__ == '__main__':
     main()

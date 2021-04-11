@@ -1,6 +1,6 @@
 '''
-    The module used to train the model.
-    Usage: python3 train.py <size_of_char_tuples>
+    The module used to train the model. This model is based on characters.
+    Usage: python3 train_char.py <size_of_char_tuples>
 '''
 
 import sys
@@ -9,11 +9,11 @@ sys.path.append('/usr/local/lib/python3.8/site-packages/')
 
 from tqdm import tqdm
 
-corpus_path_prefix = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/double_corpus/news-'
+corpus_path_prefix = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/triple_corpus/news-'
 corpus_index_list = ['02', '04', '05', '06', '07', '08', '09', '10', '11']
 corpus_path_suffix = '.txt'
 
-final_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/double.json'
+final_path = '/Users/ashitemaru/Downloads/CodingFolder/SophomoreSpring/pinyin/assets/json/triple.json'
 
 def main():
     if len(sys.argv) != 2:
@@ -25,9 +25,10 @@ def main():
         char_num = int(sys.argv[1])
     except ValueError:
         print('Illegal num!')
+        return
     char_num -= 1
 
-    # The double dictionary
+    # The dictionary
     static = {}
 
     # Sum all things up
@@ -44,7 +45,7 @@ def main():
                         'total': 0,
                     }
                 
-                # If the double is not in the dict, create it
+                # If the tuple is not in the dict, create it
                 if not sentence[ind: ind + char_num + 1] in static[sentence[ind: ind + char_num]]:
                     static[sentence[ind: ind + char_num]][sentence[ind: ind + char_num + 1]] = 0
                 
