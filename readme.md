@@ -38,6 +38,12 @@ python3 double.py <input> <output> <pinyin_to_hanzi> <double_json> <triple_json>
 
 后面五个参数分别表示：输入文件路径、输出文件路径、拼音到汉字的转换文件路径、统计二元词频的`json`文件路径、统计三元词频的`json`文件路径。
 
+- `data/input.txt`以及`data/output.txt`分别为使用的测试集以及使用最终模型得到的输出
+
+- `data/pinyin_hanzi.txt`以及`data/hanzi_table.txt`分别为拼音汉字对照表以及合法汉字表，用于模型生成
+
+- `data/double.json`以及`data/triple.json`分别为二元组和三元组的统计数据，可以直接用于模型生成
+
 ### 使用方法
 
 首先准备语料并预处理，之后将预处理后的语料送入数据统计程序，生成的`json`文件即可用于最后的模型生成。
